@@ -4,6 +4,11 @@ A Goatis-style take on the classic political compass — but for health, diet, a
 
 Inspired by the structure of the SapplyValues political compass quiz, this app uses a series of weighted questions to place you on a 2D grid representing your habits and tendencies.
 
+
+```bash
+https://github.com/yourusername/goatis-health-compass.git](https://guyboy1.github.io/GoatisCompass.github.io/
+```
+
 ---
 
 ## 📍 The Compass
@@ -84,4 +89,4 @@ Styled around the content and tone of Goatis
 ## 📦 Visit us at:
 
 ```bash
-[https://github.com/yourusername/goatis-health-compass.git](https://guyboy1.github.io/GoatisCompass.github.io/)
+https://github.com/yourusername/goatis-health-compass.git](https://guyboy1.github.io/GoatisCompass.github.io/
