@@ -84,4 +84,4 @@ Styled around the content and tone of Goatis
 ## 📦 Visit us at:
 
 ```bash
-https://github.com/yourusername/goatis-health-compass.git
+[https://github.com/yourusername/goatis-health-compass.git](https://guyboy1.github.io/GoatisCompass.github.io/)
