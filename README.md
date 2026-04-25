@@ -81,7 +81,7 @@ Styled around the content and tone of Goatis
 
 ---
 
-## 📦 Installation
+## 📦 Visit us at:
 
 ```bash
-git clone https://github.com/yourusername/goatis-health-compass.git
+https://github.com/yourusername/goatis-health-compass.git
