@@ -1,931 +1,575 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goatis Compass</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Oswald:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --bg: #0d0903;
-            --surface: #1a1005;
-            --surface2: #251808;
-            --bone: #e8d4a0;
-            --bone-dim: #c4b07a;
-            --blood: #8b1515;
-            --blood-bright: #c0392b;
-            --fat: #d4a017;
-            --text: #e0cfa0;
-            --text-dim: #a08060;
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Crimson Text', serif;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.03;
-        }
-
-        .screen { display: none; min-height: 100vh; }
-        .screen.active { display: flex; flex-direction: column; align-items: center; }
-
-        /* ── INTRO ── */
-        #intro-screen {
-            padding: 60px 24px 80px;
-            text-align: center;
-            justify-content: center;
-            background: radial-gradient(ellipse at 50% 20%, #2a1208 0%, #0d0903 65%);
-        }
-
-        .intro-goat { font-size: 72px; display: block; margin-bottom: 20px; filter: drop-shadow(0 0 24px rgba(200,134,10,0.5)); animation: breathe 3s ease-in-out infinite; }
-        @keyframes breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
-
-        .intro-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(64px, 13vw, 110px);
-            letter-spacing: 6px;
-            color: var(--bone);
-            text-shadow: 0 0 60px rgba(192,57,43,0.35), 0 4px 12px rgba(0,0,0,0.9);
-            line-height: 0.88;
-            margin-bottom: 10px;
-        }
-
-        .intro-sub {
-            font-family: 'Crimson Text', serif;
-            font-style: italic;
-            font-size: 20px;
-            color: var(--bone-dim);
-            letter-spacing: 1px;
-            margin-bottom: 48px;
-        }
-
-        .what-is-this {
-            max-width: 580px;
-            font-size: 18px;
-            line-height: 1.75;
-            color: var(--text-dim);
-            margin-bottom: 48px;
-        }
-
-        .what-is-this strong { color: var(--bone); }
-
-        .axes-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            max-width: 560px;
-            width: 100%;
-            margin-bottom: 52px;
-        }
-
-        .axis-card {
-            background: var(--surface);
-            border: 1px solid rgba(212,160,23,0.18);
-            padding: 20px;
-            text-align: left;
-        }
-
-        .axis-card-label {
-            font-family: 'Oswald', sans-serif;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--fat);
-            margin-bottom: 10px;
-        }
-
-        .axis-card-ends {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .axis-end {
-            font-family: 'Oswald', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--bone);
-        }
-
-        .axis-card p { font-size: 14px; color: var(--text-dim); line-height: 1.5; }
-
-        .start-btn {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 30px;
-            letter-spacing: 5px;
-            background: var(--blood);
-            color: var(--bone);
-            border: none;
-            padding: 18px 72px;
-            cursor: pointer;
-            transition: all 0.2s;
-            clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
-            position: relative;
-        }
-
-        .start-btn::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
-            clip-path: inherit;
-        }
-
-        .start-btn:hover { background: var(--blood-bright); transform: scale(1.04); }
-
-        .q-count-label {
-            font-family: 'Oswald', sans-serif;
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: var(--text-dim);
-            margin-top: 18px;
-            text-transform: uppercase;
-        }
-
-        /* ── QUIZ ── */
-        #quiz-screen {
-            padding: 0;
-            background: radial-gradient(ellipse at 50% 0%, #1a0d05 0%, #0d0903 70%);
-            justify-content: flex-start;
-        }
-
-        .quiz-top-bar {
-            width: 100%;
-            background: rgba(10,6,2,0.9);
-            border-bottom: 1px solid rgba(212,160,23,0.12);
-            padding: 16px 24px 0;
-            backdrop-filter: blur(8px);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .quiz-top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .q-number {
-            font-family: 'Oswald', sans-serif;
-            font-size: 13px;
-            font-weight: 300;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-        }
-
-        .q-goat { font-size: 20px; }
-
-        .progress-track {
-            height: 3px;
-            background: rgba(255,255,255,0.07);
-            width: 100%;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--blood) 0%, var(--fat) 100%);
-            transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        .quiz-body {
-            width: 100%;
-            max-width: 680px;
-            padding: 48px 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-        }
-
-        .question-card {
-            background: linear-gradient(150deg, #1f1307 0%, #150d04 100%);
-            border: 1px solid rgba(212,160,23,0.14);
-            padding: 44px 40px;
-            width: 100%;
-            margin-bottom: 28px;
-            box-shadow: 0 12px 48px rgba(0,0,0,0.7);
-            animation: slideUp 0.3s ease forwards;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .question-text {
-            font-size: clamp(20px, 3vw, 26px);
-            line-height: 1.55;
-            color: var(--bone);
-            text-align: center;
-        }
-
-        .answer-set {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .ans-btn {
-            font-family: 'Oswald', sans-serif;
-            font-size: 14px;
-            font-weight: 400;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            padding: 15px 20px;
-            background: var(--surface);
-            border: 1px solid rgba(212,160,23,0.15);
-            color: var(--bone-dim);
-            cursor: pointer;
-            transition: all 0.14s;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .ans-btn .btn-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            border: 1.5px solid currentColor;
-            flex-shrink: 0;
-            transition: background 0.14s;
-        }
-
-        .ans-btn:hover { background: var(--surface2); color: var(--bone); border-color: rgba(212,160,23,0.35); }
-        .ans-btn:hover .btn-dot { background: currentColor; }
-
-        .ans-btn.sa { --dot-color: #c0392b; }
-        .ans-btn.sa:hover { color: #e05040; border-left: 3px solid #c0392b; padding-left: 17px; }
-        .ans-btn.ag:hover { color: #d4841a; border-left: 3px solid #d4841a; padding-left: 17px; }
-        .ans-btn.ne:hover { color: #9a9a7a; border-left: 3px solid #9a9a7a; padding-left: 17px; }
-        .ans-btn.di:hover { color: #6a9a9a; border-left: 3px solid #6a9a9a; padding-left: 17px; }
-        .ans-btn.sd:hover { color: #6a8aaa; border-left: 3px solid #6a8aaa; padding-left: 17px; }
-
-        /* ── RESULTS ── */
-        #results-screen {
-            padding: 56px 24px 100px;
-            background: radial-gradient(ellipse at 50% 15%, #1a0d05 0%, #0d0903 65%);
-            justify-content: flex-start;
-            align-items: center;
-        }
-
-        .results-eyebrow {
-            font-family: 'Oswald', sans-serif;
-            font-size: 12px;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-            text-align: center;
-        }
-
-        .results-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(40px, 8vw, 64px);
-            letter-spacing: 6px;
-            color: var(--bone);
-            margin-bottom: 4px;
-            text-align: center;
-        }
-
-        .results-quadrant {
-            font-family: 'Crimson Text', serif;
-            font-style: italic;
-            font-size: 18px;
-            color: var(--fat);
-            margin-bottom: 40px;
-            text-align: center;
-            letter-spacing: 1px;
-        }
-
-        .canvas-wrap {
-            position: relative;
-            margin-bottom: 44px;
-        }
-
-        #compass-canvas {
-            display: block;
-            border: 1px solid rgba(212,160,23,0.18);
-            box-shadow: 0 0 60px rgba(139,21,21,0.18), 0 0 0 1px rgba(0,0,0,0.8);
-            max-width: 100%;
-        }
-
-        .archetype-block {
-            text-align: center;
-            max-width: 580px;
-            margin-bottom: 44px;
-        }
-
-        .arch-emoji {
-            font-size: 60px;
-            display: block;
-            margin-bottom: 14px;
-            filter: drop-shadow(0 0 16px rgba(200,134,10,0.45));
-            animation: breathe 3s ease-in-out infinite;
-        }
-
-        .arch-name {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(40px, 8vw, 64px);
-            letter-spacing: 4px;
-            color: var(--bone);
-            text-shadow: 0 0 30px rgba(192,57,43,0.3);
-            margin-bottom: 18px;
-            line-height: 1;
-        }
-
-        .arch-desc {
-            font-size: 19px;
-            line-height: 1.72;
-            color: var(--text-dim);
-        }
-
-        /* Score Bars */
-        .scores-wrap {
-            width: 100%;
-            max-width: 520px;
-            margin-bottom: 44px;
-        }
-
-        .score-row { margin-bottom: 22px; }
-
-        .score-ends {
-            display: flex;
-            justify-content: space-between;
-            font-family: 'Oswald', sans-serif;
-            font-size: 11px;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 7px;
-        }
-
-        .score-track {
-            height: 7px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 4px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .score-pip {
-            position: absolute;
-            top: 0; bottom: 0;
-            left: 50%;
-            width: 1px;
-            background: rgba(255,255,255,0.25);
-            z-index: 2;
-        }
-
-        .score-bar-fill {
-            position: absolute;
-            top: 0; bottom: 0;
-            border-radius: 4px;
-            transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        .retake-btn {
-            font-family: 'Oswald', sans-serif;
-            font-size: 13px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            background: none;
-            border: 1px solid rgba(212,160,23,0.25);
-            color: var(--bone-dim);
-            padding: 12px 36px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 48px;
-        }
-
-        .retake-btn:hover { border-color: var(--fat); color: var(--bone); }
-
-        .disclaimer {
-            max-width: 560px;
-            border-top: 1px solid rgba(255,255,255,0.07);
-            padding-top: 28px;
-            text-align: center;
-        }
-
-        .disc-label {
-            font-family: 'Oswald', sans-serif;
-            font-size: 10px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: rgba(160,128,96,0.6);
-            margin-bottom: 10px;
-        }
-
-        .disc-text {
-            font-size: 13px;
-            color: rgba(160,128,96,0.55);
-            line-height: 1.65;
-        }
-
-        @media (max-width: 520px) {
-            .question-card { padding: 28px 22px; }
-            .axes-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goatis Compass</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Oswald:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0903;--surface:#1a1005;--surface2:#251808;--bone:#e8d4a0;--bone-dim:#c4b07a;--blood:#8b1515;--blood-bright:#c0392b;--fat:#d4a017;--text:#e0cfa0;--text-dim:#a08060}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Text',serif;min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.03}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+/* INTRO */
+#intro-screen{padding:60px 24px 80px;text-align:center;justify-content:center;background:radial-gradient(ellipse at 50% 20%,#2a1208 0%,#0d0903 65%)}
+.intro-goat{font-size:72px;display:block;margin-bottom:20px;filter:drop-shadow(0 0 24px rgba(200,134,10,.5));animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.intro-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,13vw,110px);letter-spacing:6px;color:var(--bone);text-shadow:0 0 60px rgba(192,57,43,.35),0 4px 12px rgba(0,0,0,.9);line-height:.88;margin-bottom:10px}
+.intro-sub{font-family:'Crimson Text',serif;font-style:italic;font-size:20px;color:var(--bone-dim);letter-spacing:1px;margin-bottom:40px}
+.what-is-this{max-width:580px;font-size:18px;line-height:1.75;color:var(--text-dim);margin-bottom:40px}
+.what-is-this strong{color:var(--bone)}
+.axes-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:560px;width:100%;margin-bottom:52px}
+.axis-card{background:var(--surface);border:1px solid rgba(212,160,23,.18);padding:20px;text-align:left}
+.axis-card-label{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--fat);margin-bottom:10px}
+.axis-card-ends{display:flex;justify-content:space-between;margin-bottom:8px}
+.axis-end{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:var(--bone)}
+.axis-card p{font-size:14px;color:var(--text-dim);line-height:1.5}
+.start-btn{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:5px;background:var(--blood);color:var(--bone);border:none;padding:18px 72px;cursor:pointer;transition:all .2s;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%)}
+.start-btn:hover{background:var(--blood-bright);transform:scale(1.04)}
+.q-count-label{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;color:var(--text-dim);margin-top:18px;text-transform:uppercase}
+/* QUIZ */
+#quiz-screen{padding:0;background:radial-gradient(ellipse at 50% 0%,#1a0d05 0%,#0d0903 70%);justify-content:flex-start}
+.quiz-top-bar{width:100%;background:rgba(10,6,2,.9);border-bottom:1px solid rgba(212,160,23,.12);padding:16px 24px 0;backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+.quiz-top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.q-number{font-family:'Oswald',sans-serif;font-size:13px;font-weight:300;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim)}
+.progress-track{height:3px;background:rgba(255,255,255,.07);width:100%}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blood) 0%,var(--fat) 100%);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.quiz-body{width:100%;max-width:680px;padding:48px 24px 32px;display:flex;flex-direction:column;align-items:center;flex:1}
+.question-card{background:linear-gradient(150deg,#1f1307 0%,#150d04 100%);border:1px solid rgba(212,160,23,.14);padding:44px 40px;width:100%;margin-bottom:28px;box-shadow:0 12px 48px rgba(0,0,0,.7);animation:slideUp .3s ease forwards}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.question-text{font-size:clamp(19px,2.8vw,25px);line-height:1.58;color:var(--bone);text-align:center}
+.answer-set{display:flex;flex-direction:column;gap:8px;width:100%}
+.ans-btn{font-family:'Oswald',sans-serif;font-size:14px;font-weight:400;letter-spacing:2px;text-transform:uppercase;padding:15px 20px;background:var(--surface);border:1px solid rgba(212,160,23,.15);color:var(--bone-dim);cursor:pointer;transition:all .14s;text-align:left;display:flex;align-items:center;gap:14px}
+.ans-btn .btn-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid currentColor;flex-shrink:0;transition:background .14s}
+.ans-btn:hover{background:var(--surface2);color:var(--bone);border-color:rgba(212,160,23,.35)}
+.ans-btn:hover .btn-dot{background:currentColor}
+.ans-btn.sa:hover{color:#e05040;border-left:3px solid #c0392b;padding-left:17px}
+.ans-btn.ag:hover{color:#d4841a;border-left:3px solid #d4841a;padding-left:17px}
+.ans-btn.ne:hover{color:#9a9a7a;border-left:3px solid #9a9a7a;padding-left:17px}
+.ans-btn.di:hover{color:#6a9a9a;border-left:3px solid #6a9a9a;padding-left:17px}
+.ans-btn.sd:hover{color:#6a8aaa;border-left:3px solid #6a8aaa;padding-left:17px}
+.quiz-nav{display:flex;justify-content:flex-start;width:100%;margin-top:14px}
+.back-btn{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:none;border:1px solid rgba(212,160,23,.14);color:var(--text-dim);padding:9px 20px;cursor:pointer;transition:all .15s}
+.back-btn:hover:not(:disabled){border-color:rgba(212,160,23,.4);color:var(--bone-dim)}
+.back-btn:disabled{opacity:.2;cursor:default}
+/* RESULTS */
+#results-screen{padding:56px 24px 100px;background:radial-gradient(ellipse at 50% 15%,#1a0d05 0%,#0d0903 65%);justify-content:flex-start;align-items:center}
+.results-eyebrow{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;text-align:center}
+.results-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,8vw,64px);letter-spacing:6px;color:var(--bone);margin-bottom:4px;text-align:center}
+.results-quadrant{font-family:'Crimson Text',serif;font-style:italic;font-size:18px;color:var(--fat);margin-bottom:36px;text-align:center}
+.canvas-wrap{position:relative;margin-bottom:14px}
+canvas{display:block;border:1px solid rgba(212,160,23,.18);box-shadow:0 0 60px rgba(139,21,21,.15);max-width:100%;animation:fadeUp .7s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.canvas-btns{display:flex;gap:10px;margin-bottom:40px;justify-content:center;flex-wrap:wrap}
+.dl-btn{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;padding:10px 22px;cursor:pointer;transition:all .18s;background:var(--blood);color:var(--bone);border:none}
+.dl-btn:hover{background:var(--blood-bright)}
+.site-link-btn{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;padding:10px 22px;background:none;border:1px solid rgba(212,160,23,.25);color:var(--bone-dim);text-decoration:none;display:inline-block;transition:all .18s}
+.site-link-btn:hover{border-color:var(--fat);color:var(--bone)}
+.archetype-block{text-align:center;max-width:580px;margin-bottom:44px;animation:fadeUp .8s .2s ease both}
+.arch-emoji{font-size:58px;display:block;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(200,134,10,.45));animation:breathe 3s ease-in-out infinite}
+.arch-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,7vw,56px);letter-spacing:4px;color:var(--bone);text-shadow:0 0 30px rgba(192,57,43,.3);margin-bottom:16px;line-height:1}
+.arch-desc{font-size:18px;line-height:1.75;color:var(--text-dim)}
+.scores-wrap{width:100%;max-width:520px;margin-bottom:44px;animation:fadeUp .8s .35s ease both}
+.score-row{margin-bottom:22px}
+.score-ends{display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:7px}
+.score-track{height:7px;background:rgba(255,255,255,.06);border-radius:4px;position:relative;overflow:hidden}
+.score-pip{position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,255,255,.25);z-index:2}
+.score-bar-fill{position:absolute;top:0;bottom:0;border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+/* TIKTOKER */
+.section-wrap{width:100%;max-width:520px;margin-bottom:44px;animation:fadeUp .8s .5s ease both;text-align:center}
+.section-heading{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:4px;color:var(--bone);margin-bottom:4px}
+.section-sub{font-family:'Crimson Text',serif;font-style:italic;font-size:15px;color:var(--text-dim);margin-bottom:18px}
+.tiktoker-legend{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;margin-top:12px;text-align:left}
+.legend-item{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-dim);display:flex;align-items:center;gap:7px}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.retake-btn{font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:3px;text-transform:uppercase;background:none;border:1px solid rgba(212,160,23,.22);color:var(--bone-dim);padding:12px 36px;cursor:pointer;transition:all .2s;margin-bottom:48px}
+.retake-btn:hover{border-color:var(--fat);color:var(--bone)}
+.disclaimer{max-width:560px;border-top:1px solid rgba(255,255,255,.07);padding-top:28px;text-align:center;margin-bottom:24px}
+.disc-label{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(160,128,96,.55);margin-bottom:10px}
+.disc-text{font-size:13px;color:rgba(160,128,96,.5);line-height:1.65}
+.footer-link{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(180,148,96,.35);text-decoration:none;text-transform:uppercase;transition:color .2s}
+.footer-link:hover{color:var(--bone-dim)}
+@media(max-width:520px){.axes-grid,.tiktoker-legend{grid-template-columns:1fr}.question-card{padding:26px 20px}}
+</style>
 </head>
 <body>
 
-<!-- ── INTRO SCREEN ── -->
+<!-- INTRO -->
 <div id="intro-screen" class="screen active">
-    <span class="intro-goat">🐐</span>
-    <h1 class="intro-title">Goatis<br>Compass</h1>
-    <p class="intro-sub">Where does your diet and lifestyle actually land?</p>
-
-    <div class="what-is-this">
-        <p>Inspired by TikTok health culture — <strong>Goatis, Santa Cruz Medicinals, the raw meat community</strong> and everyone in between — this compass maps your diet and lifestyle choices across two axes.</p>
-        <p style="margin-top:14px">Answer 40 statements honestly. Your position on the compass will be revealed.</p>
+  <span class="intro-goat">🐐</span>
+  <h1 class="intro-title">Goatis<br>Compass</h1>
+  <p class="intro-sub">Where does your diet and lifestyle actually land?</p>
+  <div class="what-is-this">
+    <p>Inspired by TikTok health culture — <strong>Goatis, Santa Cruz Medicinals, Dillon Latham</strong> and the entire ancestral health internet — this test maps your diet and lifestyle across two axes. No judgment. Mostly.</p>
+    <p style="margin-top:14px">You will be shown a statement. Rate your agreement. Your coordinates will be plotted on the compass.</p>
+  </div>
+  <div class="axes-grid">
+    <div class="axis-card">
+      <div class="axis-card-label">← Horizontal Axis →</div>
+      <div class="axis-card-ends"><span class="axis-end">Omnivore</span><span class="axis-end">Carnivore</span></div>
+      <p>How exclusively animal-based is your diet? Varied on the left, pure meat on the right.</p>
     </div>
-
-    <div class="axes-grid">
-        <div class="axis-card">
-            <div class="axis-card-label">← Horizontal Axis →</div>
-            <div class="axis-card-ends">
-                <span class="axis-end">Omnivore</span>
-                <span class="axis-end">Carnivore</span>
-            </div>
-            <p>How exclusively animal-based is your diet? Plants on the left, pure meat on the right.</p>
-        </div>
-        <div class="axis-card">
-            <div class="axis-card-label">↑ Vertical Axis ↓</div>
-            <div class="axis-card-ends">
-                <span class="axis-end">Primal Nutt</span>
-                <span class="axis-end" style="text-align:right">Goy Slop</span>
-            </div>
-            <p>How raw, ancestral and unprocessed is your lifestyle? Primal at the top, processed at the bottom.</p>
-        </div>
+    <div class="axis-card">
+      <div class="axis-card-label">↑ Vertical Axis ↓</div>
+      <div class="axis-card-ends"><span class="axis-end">Primal Nutt</span><span class="axis-end" style="text-align:right">Goy Slop</span></div>
+      <p>How raw, ancestral and unprocessed is your lifestyle? Peak primal at the top, fully captured at the bottom.</p>
     </div>
-
-    <button class="start-btn" onclick="startQuiz()">TAKE THE TEST</button>
-    <p class="q-count-label">40 questions · ~4 minutes</p>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">TAKE THE TEST</button>
+  <p class="q-count-label" id="intro-label">45 questions · ~4 minutes</p>
 </div>
 
-<!-- ── QUIZ SCREEN ── -->
+<!-- QUIZ -->
 <div id="quiz-screen" class="screen">
-    <div class="quiz-top-bar">
-        <div class="quiz-top-row">
-            <span class="q-number" id="q-counter">Question 1 of 40</span>
-            <span class="q-goat">🐐</span>
-        </div>
-        <div class="progress-track">
-            <div class="progress-fill" id="prog-fill" style="width:0%"></div>
-        </div>
+  <div class="quiz-top-bar">
+    <div class="quiz-top-row">
+      <span class="q-number" id="q-counter">Question 1 of 45</span>
+      <span style="font-size:18px">🐐</span>
     </div>
-
-    <div class="quiz-body">
-        <div class="question-card" id="q-card">
-            <p class="question-text" id="q-text">Loading...</p>
-        </div>
-
-        <div class="answer-set">
-            <button class="ans-btn sa" onclick="answer(1)">
-                <span class="btn-dot"></span> Strongly Agree
-            </button>
-            <button class="ans-btn ag" onclick="answer(0.5)">
-                <span class="btn-dot"></span> Agree
-            </button>
-            <button class="ans-btn ne" onclick="answer(0)">
-                <span class="btn-dot"></span> Neutral / No Opinion
-            </button>
-            <button class="ans-btn di" onclick="answer(-0.5)">
-                <span class="btn-dot"></span> Disagree
-            </button>
-            <button class="ans-btn sd" onclick="answer(-1)">
-                <span class="btn-dot"></span> Strongly Disagree
-            </button>
-        </div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="quiz-body">
+    <div class="question-card" id="q-card">
+      <p class="question-text" id="q-text">Loading…</p>
     </div>
+    <div class="answer-set">
+      <button class="ans-btn sa" onclick="answer(1)"><span class="btn-dot"></span>Strongly Agree</button>
+      <button class="ans-btn ag" onclick="answer(0.5)"><span class="btn-dot"></span>Agree</button>
+      <button class="ans-btn ne" onclick="answer(0)"><span class="btn-dot"></span>Neutral / Skip</button>
+      <button class="ans-btn di" onclick="answer(-0.5)"><span class="btn-dot"></span>Disagree</button>
+      <button class="ans-btn sd" onclick="answer(-1)"><span class="btn-dot"></span>Strongly Disagree</button>
+    </div>
+    <div class="quiz-nav">
+      <button class="back-btn" id="back-btn" onclick="goBack()" disabled>← Previous Question</button>
+    </div>
+  </div>
 </div>
 
-<!-- ── RESULTS SCREEN ── -->
+<!-- RESULTS -->
 <div id="results-screen" class="screen">
-    <p class="results-eyebrow">Your Result</p>
-    <h2 class="results-title">GOATIS COMPASS</h2>
-    <p class="results-quadrant" id="res-quadrant">Carnivore · Primal Nutt</p>
-
-    <div class="canvas-wrap">
-        <canvas id="compass-canvas"></canvas>
+  <p class="results-eyebrow">Your Result</p>
+  <h2 class="results-title">GOATIS COMPASS</h2>
+  <p class="results-quadrant" id="res-quadrant">Carnivore · Primal Nutt</p>
+  <div class="canvas-wrap"><canvas id="compass-canvas"></canvas></div>
+  <div class="canvas-btns">
+    <button class="dl-btn" onclick="downloadCompass()">⬇ Download</button>
+    <a class="site-link-btn" href="https://goatisvalues.github.io" target="_blank">🐐 goatisvalues.github.io</a>
+  </div>
+  <div class="archetype-block">
+    <span class="arch-emoji" id="arch-emoji">🐐</span>
+    <h3 class="arch-name" id="arch-name">THE LIVER SOVEREIGN</h3>
+    <p class="arch-desc" id="arch-desc"></p>
+  </div>
+  <div class="scores-wrap">
+    <div class="score-row">
+      <div class="score-ends"><span>Omnivore</span><span>Carnivore</span></div>
+      <div class="score-track"><div class="score-pip"></div><div class="score-bar-fill" id="meat-bar"></div></div>
     </div>
-
-    <div class="archetype-block">
-        <span class="arch-emoji" id="arch-emoji">🐐</span>
-        <h3 class="arch-name" id="arch-name">THE RAW WOLF</h3>
-        <p class="arch-desc" id="arch-desc">Description loading...</p>
+    <div class="score-row">
+      <div class="score-ends"><span>Goy Slop</span><span>Primal Nutt</span></div>
+      <div class="score-track"><div class="score-pip"></div><div class="score-bar-fill" id="primal-bar"></div></div>
     </div>
-
-    <div class="scores-wrap">
-        <div class="score-row">
-            <div class="score-ends">
-                <span>Omnivore</span>
-                <span>Carnivore</span>
-            </div>
-            <div class="score-track">
-                <div class="score-pip"></div>
-                <div class="score-bar-fill" id="meat-bar"></div>
-            </div>
-        </div>
-        <div class="score-row">
-            <div class="score-ends">
-                <span>Goy Slop</span>
-                <span>Primal Nutt</span>
-            </div>
-            <div class="score-track">
-                <div class="score-pip"></div>
-                <div class="score-bar-fill" id="primal-bar"></div>
-            </div>
-        </div>
-    </div>
-
-    <button class="retake-btn" onclick="resetQuiz()">↩ Retake the Test</button>
-
-    <div class="disclaimer">
-        <div class="disc-label">⚠ A note from the compass</div>
-        <p class="disc-text">
-            This quiz is for entertainment only, based on TikTok health culture. It does not reflect medical or nutritional consensus.
-            Raw milk carries real risk of serious bacterial infection (E. coli, Salmonella, Listeria) — especially dangerous for children, pregnant people, and the immunocompromised.
-            Raw meat carries similar risks. Eating raw organ meats can expose you to parasites and pathogens.
-            Please consult a qualified healthcare professional or registered dietitian before making significant dietary changes.
-            The goat appreciates your commitment, but also wants you to be alive.
-        </p>
-    </div>
+  </div>
+  <div class="section-wrap">
+    <h3 class="section-heading">The Scene</h3>
+    <p class="section-sub">How do you compare to the famous names on the compass?</p>
+    <canvas id="tiktoker-canvas"></canvas>
+    <div class="tiktoker-legend" id="tiktoker-legend"></div>
+  </div>
+  <button class="retake-btn" onclick="resetQuiz()">↩ Retake</button>
+  <div class="disclaimer">
+    <div class="disc-label">⚠ Health Notice</div>
+    <p class="disc-text">Entertainment only — based on TikTok health culture, not medical science. Raw milk poses real risk of E. coli, Salmonella and Listeria. Raw meat and organs carry parasite and bacterial risks. Consult a qualified healthcare professional before making major dietary changes. The goat wants you to live to eat more raw liver.</p>
+  </div>
+  <a class="footer-link" href="https://goatisvalues.github.io" target="_blank">goatisvalues.github.io</a>
 </div>
 
 <script>
-const questions = [
-    { text: "Meat is the absolute foundation of every single meal I eat.", c: 2, p: 0 },
-    { text: "I eat my meat raw or very rare (blue, basically raw) whenever possible.", c: 1, p: 2.5 },
-    { text: "I have consumed raw liver or other raw organ meats.", c: 2, p: 3 },
-    { text: "I drink raw, unpasteurised milk.", c: 0.5, p: 2.5 },
-    { text: "I regularly consume pasteurised dairy products — supermarket milk, cheese, or yoghurt.", c: 0.5, p: -1 },
-    { text: "I eat cooked organ meats like liver, heart, or kidney on a regular basis.", c: 1.5, p: 1 },
-    { text: "Fruit makes up a large and intentional portion of my daily diet.", c: -1.5, p: 0.5 },
-    { text: "I drink coconut water or raw/freshly squeezed fruit juice regularly.", c: -0.5, p: 1 },
-    { text: "Leafy greens and vegetables are the absolute backbone of my diet.", c: -2, p: -1 },
-    { text: "I have eaten plant-based or fake meat alternatives like Beyond Burger or Impossible Meat.", c: -2, p: -2.5 },
-    { text: "I eat ultra-processed foods — chips, frozen meals, fast food — on most days.", c: -1, p: -2.5 },
-    { text: "I cook with seed oils like vegetable, canola, sunflower, or soybean oil.", c: 0, p: -2 },
-    { text: "I eat fermented foods like kefir, sauerkraut, or kimchi regularly.", c: 0, p: 1.5 },
-    { text: "I take peptides or bioregulators as part of my health routine.", c: 0, p: -0.5 },
-    { text: "I vape or smoke tobacco or nicotine products on a regular basis.", c: 0, p: -2.5 },
-    { text: "I sleep on a standard memory foam or spring mattress in a conventional bed every night.", c: 0, p: -0.5 },
-    { text: "I regularly practice grounding — walking barefoot on grass, soil, or sand.", c: 0, p: 2 },
-    { text: "I spend at least 2 hours outside in natural environments daily.", c: 0, p: 1.5 },
-    { text: "I deliberately get direct morning sunlight in my eyes within an hour of waking up.", c: 0, p: 1.5 },
-    { text: "I actively avoid all seed and vegetable oils in everything I eat.", c: 0, p: 2 },
-    { text: "I eat nose-to-tail — organs, bone marrow, animal fat, and all parts of the animal.", c: 2, p: 2 },
-    { text: "I drink bone broth or regularly eat other gut-supporting animal foods.", c: 0.5, p: 1.5 },
-    { text: "I intentionally eat a high amount of saturated fat from animal sources.", c: 1, p: 1 },
-    { text: "I always choose fatty cuts — ribeye, belly, brisket — over lean cuts of meat.", c: 1.5, p: 1.5 },
-    { text: "I use protein powders, creatine, or other synthetic workout supplements regularly.", c: 0, p: -1.5 },
-    { text: "Bread, pasta, or other refined grains make up a significant part of my diet.", c: -1.5, p: -1 },
-    { text: "I drink unfiltered tap water without thinking twice about it.", c: 0, p: -1 },
-    { text: "I apply sunscreen most days before going outside.", c: 0, p: -1 },
-    { text: "I cold plunge or take cold showers regularly as a dedicated health practice.", c: 0, p: 2 },
-    { text: "I fast regularly — whether intermittently or for extended multi-day periods.", c: 0.5, p: 1.5 },
-    { text: "I prioritise wild-caught, hunted, or locally sourced food over mass supermarket produce.", c: 1.5, p: 2 },
-    { text: "I eat raw eggs on a regular basis.", c: 0.5, p: 2 },
-    { text: "I obsessively track calories or macros using an app.", c: 0, p: -0.5 },
-    { text: "I believe cooking food significantly destroys its nutritional value and natural enzymes.", c: 0, p: 2 },
-    { text: "I intentionally eat insects or lab-grown protein as a sustainable food source.", c: -1, p: -3 },
-    { text: "I avoid all sugars — including the natural sugars found in fruit.", c: 0.5, p: 1 },
-    { text: "I drink energy drinks or fizzy soft drinks on a regular basis.", c: 0, p: -2 },
-    { text: "I sleep on the floor or a very firm flat surface instead of a conventional mattress.", c: 0, p: 1.5 },
-    { text: "I would describe my overall approach to health and food as 'ancestral', 'primal', or 'carnivore'.", c: 1, p: 2 },
-    { text: "If I had easy access to a cow or goat, I would drink the raw milk directly from the animal.", c: 0.5, p: 2.5 },
+/* ════════════════════════════════════════════════════════════════
+   QUESTION BANK — easy to edit!
+   Each entry:
+     text : statement shown to user (must make sense as agree/disagree)
+     c    : carnivore weight  (pos = carnivore, neg = omnivore)  range ±3
+     p    : primal weight     (pos = primal nutt, neg = goy slop) range ±3
+════════════════════════════════════════════════════════════════ */
+const Q = [
+
+  // ── MEAT & ANIMAL FOODS ──────────────────────────────────────
+  { text:"Meat is the non-negotiable foundation of every single meal I eat.",                                   c: 2,    p: 0   },
+  { text:"I prefer my steak rare or blue — well-done meat is basically an insult to the animal.",              c: 1,    p: 1.5 },
+  { text:"I have eaten raw liver or other raw organ meats, and I would do it again.",                          c: 2,    p: 3   },
+  { text:"Raw, unpasteurised milk is a completely normal drink to me.",                                        c: 0.5,  p: 2.5 },
+  { text:"Pasteurised supermarket milk, cheese or yoghurt is a regular part of my diet.",                      c: 0.5,  p: -1  },
+  { text:"Cooked organ meats — liver, heart, kidney — appear in my diet at least once a week.",                c: 1.5,  p: 1   },
+  { text:"I eat nose-to-tail: bone marrow, organ meats, skin and fat — not just muscle.",                      c: 2,    p: 2   },
+  { text:"I always choose fatty cuts — ribeye, brisket, pork belly — over lean cuts.",                        c: 1.5,  p: 1.5 },
+  { text:"Wild-caught, hunted or locally sourced food is something I actively prioritise.",                    c: 1.5,  p: 2   },
+  { text:"Raw eggs are a normal, regular part of my diet.",                                                    c: 0.5,  p: 2   },
+  { text:"I drink bone broth regularly as a deliberate nutritional and gut-health strategy.",                  c: 0.5,  p: 1.5 },
+  { text:"If I had easy access to a cow or goat, I would drink the raw milk straight from the animal.",        c: 0.5,  p: 2.5 },
+
+  // ── PLANTS & OMNIVORE ──────────────────────────────────────────
+  { text:"Fruit makes up a large and deliberate portion of my daily diet.",                                    c: -1.5, p: 0.5 },
+  { text:"Coconut water or freshly-squeezed fruit juice is something I drink regularly.",                      c: -0.5, p: 1   },
+  { text:"Vegetables and leafy greens are the backbone of my diet — more than anything else.",                 c: -2,   p: -1  },
+  { text:"Bread, pasta or refined grains are a core part of my daily diet.",                                   c: -1.5, p: -1  },
+  { text:"Plant-based meat alternatives like Beyond Burger or Impossible Meat are a legitimate food.",         c: -2,   p: -2.5},
+  { text:"I deliberately eat fermented foods — kefir, kimchi, sauerkraut — as a gut health strategy.",        c: 0,    p: 1.5 },
+  { text:"Insects or lab-grown protein are a legitimate, sustainable food source I'd consider eating.",        c: -1,   p: -3  },
+  { text:"I actively avoid all added sugar — including the natural sugar found in fruit.",                     c: 0.5,  p: 1   },
+
+  // ── PROCESSED & GOY SLOP ───────────────────────────────────────
+  { text:"Ultra-processed foods — chips, frozen meals, fast food — appear in my diet on most days.",           c: -1,   p: -2.5},
+  { text:"I cook my food in seed oils like vegetable, canola or sunflower oil without concern.",               c: 0,    p: -2  },
+  { text:"Seed oils are among the most harmful things in the modern food supply.",                             c: 0,    p: 2   },
+  { text:"I deliberately track my fibre intake and try to hit a high daily target.",                           c: -0.5, p: -0.5},
+
+  // ── SLEEP ──────────────────────────────────────────────────────
+  { text:"I consistently get 8 or more hours of quality sleep every night.",                                   c: 0,    p: 1.5 },
+  { text:"My sleep schedule is completely chaotic — bedtime and wake time vary wildly.",                       c: 0,    p: -2  },
+  { text:"Getting fewer than 6 hours of sleep is the norm for me rather than the exception.",                  c: 0,    p: -2  },
+  { text:"I avoid screens and bright artificial light for at least an hour before going to sleep.",            c: 0,    p: 1.5 },
+  { text:"I sleep on the floor or an extremely firm, flat surface instead of a conventional mattress.",        c: 0,    p: 1.5 },
+
+  // ── STIMULANTS & ENERGY ────────────────────────────────────────
+  { text:"Energy drinks are a near-daily fixture in my life.",                                                 c: 0,    p: -2.5},
+  { text:"Fizzy soft drinks or cordial are something I consume regularly.",                                    c: 0,    p: -1.5},
+  { text:"I drink coffee, but only occasionally — I am genuinely not dependent on caffeine.",                  c: 0,    p: 0.5 },
+  { text:"I need caffeine just to feel functional in the morning.",                                            c: 0,    p: -1.5},
+  { text:"I vape or smoke tobacco or nicotine products regularly.",                                            c: 0,    p: -2.5},
+
+  // ── LIFESTYLE & PRIMAL PRACTICES ──────────────────────────────
+  { text:"Getting direct morning sunlight in my eyes within the first hour of waking is a daily practice.",   c: 0,    p: 1.5 },
+  { text:"Grounding — walking barefoot on grass, soil or sand — is something I do on most days.",             c: 0,    p: 2   },
+  { text:"Cold plunging or cold showers are a deliberate, regular part of my health routine.",                c: 0,    p: 2   },
+  { text:"I fast regularly — whether intermittent or multi-day — as a deliberate health practice.",           c: 0.5,  p: 1.5 },
+  { text:"I believe cooking food significantly degrades its nutritional value and destroys natural enzymes.",  c: 0,    p: 2   },
+  { text:"I would describe my overall approach to health and food as ancestral, primal or carnivore.",         c: 1,    p: 2   },
+
+  // ── SUPPLEMENTS & MODERN INTERVENTIONS ────────────────────────
+  { text:"Peptides or bioregulators are part of my regular health stack.",                                     c: 0,    p: -0.5},
+  { text:"Protein powders, creatine or other synthetic workout supplements are a regular part of my routine.",c: 0,    p: -1.5},
+  { text:"Obsessively tracking calories or macros in an app is part of my daily life.",                        c: 0,    p: -0.5},
+  { text:"I apply sunscreen most days before going outside.",                                                  c: 0,    p: -1  },
+  { text:"I drink unfiltered tap water without any second thoughts.",                                          c: 0,    p: -1  },
+  { text:"I spend at least 2 hours a day outside in natural environments.",                                    c: 0,    p: 1.5 },
+];
+/* ════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════
+   TIKTOKER / FAMOUS PEOPLE — adjust positions freely!
+   x: -100 (full omnivore) … +100 (full carnivore)
+   y: -100 (full goy slop) … +100 (full primal)
+════════════════════════════════════════════════════════════════ */
+const TIKTOKERS = [
+  { name:"Goatis",          emoji:"🐐", x: 87, y: 88, color:"#c0392b" },
+  { name:"Santa Cruz",      emoji:"🌿", x: 60, y: 78, color:"#b07820" },
+  { name:"Dillon Latham",   emoji:"💪", x: 46, y: 55, color:"#c07020" },
+  { name:"Clavicular",      emoji:"🦴", x: 72, y: 80, color:"#c04018" },
+  { name:"Huberman",        emoji:"🧠", x:  8, y: 66, color:"#4a7a9a" },
+  { name:"Doctor Mike",     emoji:"🩺", x:-16, y:-38, color:"#4a8a5a" },
+  { name:"Bill Gates",      emoji:"💊", x:-68, y:-80, color:"#3a5a3a" },
+  { name:"YOU",             emoji:"📍", x:  0, y:  0, color:"#e03020", isUser:true },
+];
+/* ════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════
+   ARCHETYPES — checked top-down, first match wins
+════════════════════════════════════════════════════════════════ */
+const ARCHETYPES = [
+  {
+    check:(x,y)=> x>70 && y>70,
+    name:"THE LIVER SOVEREIGN", emoji:"🩸",
+    desc:"Raw liver for breakfast, raw milk straight from the source. You are fully off the grid of dietary modernity. The blood path is serious, and you already know it. Goatis himself would hand you the goat."
+  },
+  {
+    check:(x,y)=> x>50 && y>45,
+    name:"THE GOATIS DISCIPLE", emoji:"🐐",
+    desc:"Strict carnivore, primal in every way, and very online about it. You know what seed oils are and you are not quiet about it. Rare steak, raw eggs, daily grounding. The goat approves."
+  },
+  {
+    check:(x,y)=> x>20 && y>20 && x<=50,
+    name:"THE TALLOW MAXXER", emoji:"🥩",
+    desc:"Carnivore-adjacent, cooking in tallow, avoiding seed oils like a religion. You haven't gone full raw but the instincts are right. Slowly deprogramming from modern food culture one ribeye at a time."
+  },
+  {
+    check:(x,y)=> x>20 && y>-10 && y<=20,
+    name:"THE STEAK & SUNLIGHT GUY", emoji:"☀️",
+    desc:"Meat-forward, getting outside, aware of seed oils. Not fully optimised yet, but the foundations are sound. One podcast episode away from going completely primal."
+  },
+  {
+    check:(x,y)=> x<-20 && y>55,
+    name:"THE FRUITARIAN PROPHET", emoji:"🌴",
+    desc:"Primal as they come — coconut water, tropical fruit, raw eggs from a local farm — but the meat path hasn't called to you yet. Andrew Huberman with extra mango energy. The ancestors are broadly satisfied."
+  },
+  {
+    check:(x,y)=> Math.abs(x)<=25 && y>55,
+    name:"THE PROTOCOL KING", emoji:"🧠",
+    desc:"Morning sunlight. Cold plunge. Eight hours of sleep, tracked to the minute. Seed oils are banned in your house. Your diet is flexible but your lifestyle is maximally primal. You will tell people about cortisol unprompted."
+  },
+  {
+    check:(x,y)=> x<-20 && y>15 && y<=55,
+    name:"THE MICROBIOME MONK", emoji:"🍄",
+    desc:"You ferment things in your fridge, drink kefir with conviction, and take your gut bacteria very seriously. Omnivore but deeply ancestral in your approach. The goat respects the dedication."
+  },
+  {
+    check:(x,y)=> x>60 && y<-45,
+    name:"THE SAD STEAK GUY", emoji:"🥩😔",
+    desc:"You eat meat — and that's where the primal journey ends. Cooked well done. Possibly in canola oil. Washed down with Diet Coke. You're on the meat path but modernity still has its hooks deep in you."
+  },
+  {
+    check:(x,y)=> x>25 && y<-20,
+    name:"THE COMPROMISED CARNIVORE", emoji:"🥩🏪",
+    desc:"Carnivore in theory, goy slop in practice. You know about seed oils but there's one in your kitchen. You own a vape. You'll get there. Probably. The path is right, the execution has gaps."
+  },
+  {
+    check:(x,y)=> x<-50 && y<-50,
+    name:"THE WEF DIET", emoji:"🌱💀",
+    desc:"Fake meat, oat milk, energy drinks, and you'd genuinely consider eating a lab-grown insect burger. Society has you completely. The goat looks away in silence. But also, you're probably fine. The jury is literally still out."
+  },
+  {
+    check:(x,y)=> x<-15 && y<-15,
+    name:"THE NPC NORMIE", emoji:"🛒",
+    desc:"Varied but processed and plant-leaning. You trust mainstream nutritional guidance, eat whatever is convenient, and the phrase 'seed oil' means nothing to you. The compass notes your coordinates without excessive judgment."
+  },
+  {
+    check:(x,y)=> Math.abs(x)<=22 && y<-45,
+    name:"FULL SYSTEM CAPTURE", emoji:"🏭",
+    desc:"Your lifestyle has been fully optimised by modern consumer society. Processed food, synthetic supplements, seed oils, sunscreen daily, energy drinks on tap. You are living entirely inside the matrix. You seem comfortable. That is what concerns the goat."
+  },
+  {
+    check:(x,y)=> Math.abs(x)<=28 && Math.abs(y)<=28,
+    name:"THE JOE ROGAN ZONE", emoji:"🎙️",
+    desc:"Philosophically unclassifiable. You eat a rare steak and an oat milk latte the same day. You've cold plunged twice. You've also eaten McDonald's this week. The compass simply spins. The goat nods respectfully at the chaos."
+  },
+  {
+    check:(x,y)=> x>40 && Math.abs(y)<=22,
+    name:"THE PROTEIN SEEKER", emoji:"🔪",
+    desc:"You eat a lot of meat. The ancestral vs processed debate hasn't fully entered your world yet. You're just a meat guy. Uncomplicated. The compass respects simplicity."
+  },
+  {
+    check:(x,y)=> x<-40 && Math.abs(y)<=22,
+    name:"THE BALANCED CIVILIAN", emoji:"🥗",
+    desc:"Varied diet, reasonable lifestyle, not radicalised in either direction. You eat plants and sometimes meat, sleep okay, and don't think too hard about any of this. Respectable. The goat shrugs and keeps grazing."
+  },
+  {
+    check:()=> true,
+    name:"THE WANDERER", emoji:"🐐",
+    desc:"Your position defies easy categorisation. Complex. Multidimensional. Genuinely hard to place. The goat tilts its head, chews a piece of raw liver, and accepts the mystery."
+  },
 ];
 
-const archetypes = [
-    {
-        check: (x,y) => x > 55 && y > 55,
-        name: "THE RAW WOLF", emoji: "🐺",
-        desc: "You eat raw liver for breakfast and your idea of a treat is fresh marrow bone. You are fully off the grid of society's dietary control. Goatis himself would nod in solemn approval. You are ancestor-tier. The blood path is slippery — but you already know that."
-    },
-    {
-        check: (x,y) => x > 20 && y > 50,
-        name: "THE ANCESTRAL CHAD", emoji: "🥩",
-        desc: "Mostly carnivore, leaning raw and primal. You know exactly what seed oils are and you are NOT happy about it. You eat rare steak, you probably ground most days, and the word 'pasteurised' makes you slightly uneasy."
-    },
-    {
-        check: (x,y) => x < -20 && y > 50,
-        name: "THE JUNGLE MONK", emoji: "🌴",
-        desc: "Coconut water, tropical fruits, raw eggs from a local farm, grounding sessions at dawn. You're primal but you haven't committed to the full meat path. Andrew Huberman with extra fruit snacks. The ancestors are mostly proud."
-    },
-    {
-        check: (x,y) => Math.abs(x) <= 20 && y > 50,
-        name: "THE PRIMAL HEALTH BRO", emoji: "💪",
-        desc: "Fully committed to ancestral living without taking a hard stance on the meat-vs-plants debate. You ground, cold plunge, get morning sunlight, and definitely have opinions on seed oils that you will share unprompted at dinner."
-    },
-    {
-        check: (x,y) => x > 60 && y < -55,
-        name: "THE SAD STEAK GUY", emoji: "🥩😔",
-        desc: "You eat meat — and that's about where the primal journey ends. You cook it well done. Possibly in vegetable oil. Washed down with Diet Coke. You're on the meat path but society still has deep hooks in you. The ancestors weep softly."
-    },
-    {
-        check: (x,y) => x > 20 && y < -20,
-        name: "THE COMPROMISED CARNIVORE", emoji: "🥩🏪",
-        desc: "You eat meat and lean carnivore, but goy slop has clearly infiltrated the system. Processed dairy, everything cooked, maybe a vape pen nearby. You're on the path but the modern world hasn't let go yet. Work in progress."
-    },
-    {
-        check: (x,y) => x < -55 && y < -55,
-        name: "THE BEYOND BURGER ENJOYER", emoji: "🌱💀",
-        desc: "Fake meat, seed oils, oat milk lattes, energy drinks, and a vape somewhere nearby. You are the final form of goy slop consumption. Society has fully, completely captured you. The goat weeps. But also, you're probably fine. Probably."
-    },
-    {
-        check: (x,y) => x < -20 && y < -20,
-        name: "THE PROCESSED NORMIE", emoji: "🛒",
-        desc: "Varied but processed and plant-leaning diet. You trust mainstream nutritional advice, you eat whatever's convenient, and you've never really thought hard about seed oils. The goatis compass simply notes your coordinates without judgment. Much."
-    },
-    {
-        check: (x,y) => Math.abs(x) <= 20 && y < -50,
-        name: "FULL GOY SLOP", emoji: "🏭",
-        desc: "Your lifestyle has been fully optimised by modern consumer society. Processed foods, synthetic supplements, seed oils, sunscreen every day, tap water, energy drinks. You are living entirely within the matrix. You seem comfortable. That's the concerning part."
-    },
-    {
-        check: (x,y) => Math.abs(x) <= 30 && Math.abs(y) <= 30,
-        name: "THE FENCE SITTER", emoji: "🤷",
-        desc: "Philosophically unclassifiable on the goatis compass. You might eat a rare steak AND have an oat milk latte the same day. You grind sometimes. You cold plunge occasionally. You live in the radical centre of the dietary spectrum. The compass simply spins."
-    },
-    {
-        check: (x,y) => x > 40 && Math.abs(y) <= 20,
-        name: "THE MEAT GUY", emoji: "🔪",
-        desc: "You eat meat. You really like meat. The primal vs goy slop discourse hasn't fully consumed your lifestyle yet. You're just a meat guy. The compass respects simplicity."
-    },
-    {
-        check: (x,y) => x < -40 && Math.abs(y) <= 20,
-        name: "THE BALANCED CIVILIAN", emoji: "🥗",
-        desc: "You eat a variety of foods, live a reasonably balanced life, and haven't been radicalised in either direction. Respectable. The goat notes your coordinates, shrugs, and keeps grazing."
-    },
-    {
-        check: () => true,
-        name: "THE WANDERER", emoji: "🐐",
-        desc: "Your position on the compass defies easy categorisation. A complex individual. The goat respects your complexity."
-    },
-];
+// ── STATE ──────────────────────────────────────────────────────
+let qIdx=0, cScore=0, pScore=0, history=[];
+let _ux=0, _uy=0; // stored user position for download
 
-let qIdx = 0;
-let cScore = 0;
-let pScore = 0;
-
-// Compute theoretical max/min for normalisation
-let cMax = 0, cMin = 0, pMax = 0, pMin = 0;
-questions.forEach(q => {
-    if (q.c > 0) cMax += q.c; else cMin += q.c;
-    if (q.p > 0) pMax += q.p; else pMin += q.p;
+// compute theoretical max/min
+let cMax=0,cMin=0,pMax=0,pMin=0;
+Q.forEach(q=>{
+  if(q.c>0)cMax+=q.c; else cMin+=q.c;
+  if(q.p>0)pMax+=q.p; else pMin+=q.p;
 });
 
-function startQuiz() {
-    qIdx = 0; cScore = 0; pScore = 0;
-    showScreen('quiz-screen');
-    loadQ();
+document.getElementById('intro-label').textContent=`${Q.length} questions · ~${Math.round(Q.length*0.1)} minutes`;
+
+// ── QUIZ LOGIC ────────────────────────────────────────────────
+function startQuiz(){
+  qIdx=0;cScore=0;pScore=0;history=[];
+  showScreen('quiz-screen');loadQ();
+}
+function loadQ(){
+  const q=Q[qIdx];
+  document.getElementById('q-text').textContent=q.text;
+  document.getElementById('q-counter').textContent=`Question ${qIdx+1} of ${Q.length}`;
+  document.getElementById('prog-fill').style.width=`${(qIdx/Q.length)*100}%`;
+  document.getElementById('back-btn').disabled=qIdx===0;
+  const card=document.getElementById('q-card');
+  card.style.animation='none';void card.offsetWidth;card.style.animation='slideUp .3s ease forwards';
+}
+function answer(mult){
+  const q=Q[qIdx];
+  const cd=q.c*mult,pd=q.p*mult;
+  cScore+=cd;pScore+=pd;
+  history.push({cd,pd});
+  qIdx++;
+  if(qIdx>=Q.length)showResults();else loadQ();
+}
+function goBack(){
+  if(qIdx===0)return;
+  const last=history.pop();
+  cScore-=last.cd;pScore-=last.pd;
+  qIdx--;loadQ();
 }
 
-function loadQ() {
-    const q = questions[qIdx];
-    document.getElementById('q-text').textContent = q.text;
-    document.getElementById('q-counter').textContent = `Question ${qIdx + 1} of ${questions.length}`;
-    document.getElementById('prog-fill').style.width = `${(qIdx / questions.length) * 100}%`;
-
-    const card = document.getElementById('q-card');
-    card.style.animation = 'none';
-    void card.offsetWidth;
-    card.style.animation = 'slideUp 0.3s ease forwards';
+// ── NORMALISE ────────────────────────────────────────────────
+function norm(score,min,max){
+  if(score>=0&&max>0)return(score/max)*100;
+  if(score<0&&min<0)return(score/Math.abs(min))*100;
+  return 0;
 }
 
-function answer(mult) {
-    const q = questions[qIdx];
-    cScore += q.c * mult;
-    pScore += q.p * mult;
-    qIdx++;
-    if (qIdx >= questions.length) showResults();
-    else loadQ();
+// ── RESULTS ──────────────────────────────────────────────────
+function showResults(){
+  showScreen('results-screen');
+  const cx=Math.max(-100,Math.min(100,norm(cScore,cMin,cMax)));
+  const cy=Math.max(-100,Math.min(100,norm(pScore,pMin,pMax)));
+  _ux=cx;_uy=cy;
+
+  const xl=cx>12?'Carnivore':cx<-12?'Omnivore':'Mixed Diet';
+  const yl=cy>12?'Primal Nutt':cy<-12?'Goy Slop':'Middle Ground';
+  document.getElementById('res-quadrant').textContent=`${xl} · ${yl}`;
+
+  const arch=ARCHETYPES.find(a=>a.check(cx,cy));
+  document.getElementById('arch-emoji').textContent=arch.emoji;
+  document.getElementById('arch-name').textContent=arch.name;
+  document.getElementById('arch-desc').textContent=arch.desc;
+
+  // Bars
+  const mb=document.getElementById('meat-bar');
+  mb.style.cssText=cx>=0?`left:50%;right:auto;width:${cx/2}%;background:linear-gradient(90deg,#8b1515,#c0392b);`:`right:50%;left:auto;width:${-cx/2}%;background:linear-gradient(90deg,#4a9a6a,#2a6a4a);`;
+  const pb=document.getElementById('primal-bar');
+  pb.style.cssText=cy>=0?`left:50%;right:auto;width:${cy/2}%;background:linear-gradient(90deg,#8b6010,#d4a017);`:`right:50%;left:auto;width:${-cy/2}%;background:linear-gradient(90deg,#3a5a3a,#4a7a4a);`;
+
+  setTimeout(()=>{drawCompass('compass-canvas',cx,cy);drawTiktokerCompass(cx,cy);},80);
 }
 
-function norm(score, min, max) {
-    if (score >= 0 && max > 0) return (score / max) * 100;
-    if (score < 0 && min < 0) return (score / Math.abs(min)) * 100;
-    return 0;
+// ── DRAW COMPASS ────────────────────────────────────────────
+function drawCompass(id,cx,cy){
+  const el=document.getElementById(id);
+  const size=Math.min(480,window.innerWidth-48);
+  el.width=size;el.height=size;
+  const ctx=el.getContext('2d');
+  const W=size,H=size,pad=58,iW=W-pad*2,iH=H-pad*2,mx=W/2,my=H/2;
+
+  // BG
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#1a1005');bg.addColorStop(1,'#0d0903');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Quadrant glow
+  [[mx,pad,W-pad-mx,my-pad,'rgba(139,21,21,0.22)','rgba(139,21,21,0)'],[pad,pad,mx-pad,my-pad,'rgba(30,80,30,0.20)','rgba(30,80,30,0)'],[mx,my,W-pad-mx,H-pad-my,'rgba(60,20,10,0.10)','rgba(60,20,10,0)'],[pad,my,mx-pad,H-pad-my,'rgba(10,30,10,0.08)','rgba(10,30,10,0)']].forEach(([ox,oy,dw,dh,c1,c2])=>{
+    const g=ctx.createRadialGradient(ox,oy,0,ox,oy,Math.hypot(dw,dh));
+    g.addColorStop(0,c1);g.addColorStop(1,c2);
+    ctx.fillStyle=g;ctx.fillRect(ox<mx?pad:mx,oy<my?pad:my,dw,dh);
+  });
+
+  // Grid
+  ctx.strokeStyle='rgba(200,180,140,0.07)';ctx.lineWidth=1;
+  for(let i=1;i<=3;i++){
+    const gx=pad+(iW/4)*i,gy=pad+(iH/4)*i;
+    ctx.beginPath();ctx.moveTo(gx,pad);ctx.lineTo(gx,H-pad);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,gy);ctx.lineTo(W-pad,gy);ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(212,160,23,0.35)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(mx,pad);ctx.lineTo(mx,H-pad);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad,my);ctx.lineTo(W-pad,my);ctx.stroke();
+  ctx.strokeStyle='rgba(212,160,23,0.18)';ctx.lineWidth=1;ctx.strokeRect(pad,pad,iW,iH);
+
+  // Arrowheads
+  ctx.fillStyle='rgba(212,160,23,0.45)';
+  const arr=(x,y,d)=>{const s=5;ctx.beginPath();if(d==='u'){ctx.moveTo(x,y);ctx.lineTo(x-s,y+s*1.6);ctx.lineTo(x+s,y+s*1.6);}if(d==='d'){ctx.moveTo(x,y);ctx.lineTo(x-s,y-s*1.6);ctx.lineTo(x+s,y-s*1.6);}if(d==='l'){ctx.moveTo(x,y);ctx.lineTo(x+s*1.6,y-s);ctx.lineTo(x+s*1.6,y+s);}if(d==='r'){ctx.moveTo(x,y);ctx.lineTo(x-s*1.6,y-s);ctx.lineTo(x-s*1.6,y+s);}ctx.closePath();ctx.fill();};
+  arr(mx,pad+2,'u');arr(mx,H-pad-2,'d');arr(pad+2,my,'l');arr(W-pad-2,my,'r');
+
+  // Axis labels
+  const fs=Math.max(9,Math.floor(size/46));
+  ctx.font=`600 ${fs}px Oswald, sans-serif`;ctx.fillStyle='rgba(212,160,23,0.75)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('PRIMAL NUTT',mx,pad-16);ctx.fillText('GOY SLOP',mx,H-pad+18);
+  ctx.save();ctx.translate(pad-16,my);ctx.rotate(-Math.PI/2);ctx.fillText('OMNIVORE',0,0);ctx.restore();
+  ctx.save();ctx.translate(W-pad+18,my);ctx.rotate(Math.PI/2);ctx.fillText('CARNIVORE',0,0);ctx.restore();
+
+  // Corner labels
+  const cs=Math.max(7,Math.floor(size/58));ctx.font=`${cs}px Oswald, sans-serif`;ctx.fillStyle='rgba(212,160,23,0.22)';
+  ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText('LIVER SOVEREIGN',W-pad-8,pad+8);
+  ctx.textAlign='left';ctx.fillText('FRUITARIAN PROPHET',pad+8,pad+8);
+  ctx.textBaseline='bottom';ctx.fillText('MICROBIOME MONK',pad+8,H-pad-8);
+  ctx.textAlign='right';ctx.fillText('WEF DIET',W-pad-8,H-pad-8);
+
+  // User dot
+  const dx=mx+(cx/100)*(iW/2),dy=my-(cy/100)*(iH/2);
+  const glow=ctx.createRadialGradient(dx,dy,0,dx,dy,40);
+  glow.addColorStop(0,'rgba(220,60,40,0.5)');glow.addColorStop(0.5,'rgba(220,60,40,0.12)');glow.addColorStop(1,'rgba(220,60,40,0)');
+  ctx.fillStyle=glow;ctx.beginPath();ctx.arc(dx,dy,40,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(200,80,40,0.2)';ctx.lineWidth=1;ctx.setLineDash([4,5]);
+  ctx.beginPath();ctx.moveTo(dx,dy);ctx.lineTo(dx,my);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(dx,dy);ctx.lineTo(mx,dy);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(220,80,40,0.7)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(dx,dy,13,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#e03020';ctx.beginPath();ctx.arc(dx,dy,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,240,230,0.9)';ctx.beginPath();ctx.arc(dx-2.5,dy-2.5,2.5,0,Math.PI*2);ctx.fill();
+
+  return el;
 }
 
-function showResults() {
-    showScreen('results-screen');
-    const cx = norm(cScore, cMin, cMax);  // -100 (omnivore) to +100 (carnivore)
-    const cy = norm(pScore, pMin, pMax);  // -100 (goy slop) to +100 (primal)
+// ── DRAW TIKTOKER COMPASS ───────────────────────────────────
+function drawTiktokerCompass(userX,userY){
+  const u=TIKTOKERS.find(t=>t.isUser);if(u){u.x=userX;u.y=userY;}
+  const el=document.getElementById('tiktoker-canvas');
+  const size=Math.min(480,window.innerWidth-48);
+  el.width=size;el.height=size;
+  const ctx=el.getContext('2d');
+  const W=size,H=size,pad=58,iW=W-pad*2,iH=H-pad*2,mx=W/2,my=H/2;
 
-    // Quadrant label
-    const xLab = cx > 12 ? 'Carnivore' : cx < -12 ? 'Omnivore' : 'Mixed Diet';
-    const yLab = cy > 12 ? 'Primal Nutt' : cy < -12 ? 'Goy Slop' : 'Middle Ground';
-    document.getElementById('res-quadrant').textContent = `${xLab} · ${yLab}`;
+  // same BG & axes as main compass (condensed)
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#1a1005');bg.addColorStop(1,'#0d0903');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  [[mx,pad,W-pad-mx,my-pad,'rgba(139,21,21,0.18)','rgba(139,21,21,0)'],[pad,pad,mx-pad,my-pad,'rgba(30,80,30,0.15)','rgba(30,80,30,0)'],[mx,my,W-pad-mx,H-pad-my,'rgba(60,20,10,0.08)','rgba(60,20,10,0)'],[pad,my,mx-pad,H-pad-my,'rgba(10,30,10,0.06)','rgba(10,30,10,0)']].forEach(([ox,oy,dw,dh,c1,c2])=>{const g=ctx.createRadialGradient(ox,oy,0,ox,oy,Math.hypot(dw,dh));g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillRect(ox<mx?pad:mx,oy<my?pad:my,dw,dh);});
+  ctx.strokeStyle='rgba(200,180,140,0.06)';ctx.lineWidth=1;for(let i=1;i<=3;i++){const gx=pad+(iW/4)*i,gy=pad+(iH/4)*i;ctx.beginPath();ctx.moveTo(gx,pad);ctx.lineTo(gx,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,gy);ctx.lineTo(W-pad,gy);ctx.stroke();}
+  ctx.strokeStyle='rgba(212,160,23,0.28)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(mx,pad);ctx.lineTo(mx,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,my);ctx.lineTo(W-pad,my);ctx.stroke();
+  ctx.strokeStyle='rgba(212,160,23,0.14)';ctx.lineWidth=1;ctx.strokeRect(pad,pad,iW,iH);
+  const fs=Math.max(8,Math.floor(size/48));ctx.font=`600 ${fs}px Oswald, sans-serif`;ctx.fillStyle='rgba(212,160,23,0.55)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('PRIMAL NUTT',mx,pad-15);ctx.fillText('GOY SLOP',mx,H-pad+17);
+  ctx.save();ctx.translate(pad-14,my);ctx.rotate(-Math.PI/2);ctx.fillText('OMNIVORE',0,0);ctx.restore();
+  ctx.save();ctx.translate(W-pad+16,my);ctx.rotate(Math.PI/2);ctx.fillText('CARNIVORE',0,0);ctx.restore();
 
-    // Archetype
-    const arch = archetypes.find(a => a.check(cx, cy));
-    document.getElementById('arch-emoji').textContent = arch.emoji;
-    document.getElementById('arch-name').textContent = arch.name;
-    document.getElementById('arch-desc').textContent = arch.desc;
+  // Plot each person
+  TIKTOKERS.forEach(t=>{
+    const tx=mx+(t.x/100)*(iW/2),ty=my-(t.y/100)*(iH/2),r=t.isUser?9:7;
+    const glow=ctx.createRadialGradient(tx,ty,0,tx,ty,r*4.5);
+    glow.addColorStop(0,t.color+'55');glow.addColorStop(1,t.color+'00');
+    ctx.fillStyle=glow;ctx.beginPath();ctx.arc(tx,ty,r*4.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=t.color;ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.fill();
+    if(t.isUser){ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(tx,ty,r+4,0,Math.PI*2);ctx.stroke();}
+    const es=Math.max(11,Math.floor(size/36));ctx.font=`${es}px serif`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(t.emoji,tx,ty-r-1);
+    const ns=Math.max(7,Math.floor(size/58));ctx.font=`${ns}px Oswald, sans-serif`;ctx.fillStyle='rgba(232,212,160,0.7)';ctx.textBaseline='top';ctx.fillText(t.name,tx,ty+r+2);
+  });
 
-    // Score bars
-    const meatBar = document.getElementById('meat-bar');
-    if (cx >= 0) {
-        meatBar.style.cssText = `left:50%; right:auto; width:${cx/2}%; background:linear-gradient(90deg,#8b1515,#c0392b);`;
-    } else {
-        meatBar.style.cssText = `right:50%; left:auto; width:${-cx/2}%; background:linear-gradient(90deg,#4a9a6a,#2a6a4a);`;
-    }
-
-    const primalBar = document.getElementById('primal-bar');
-    if (cy >= 0) {
-        primalBar.style.cssText = `left:50%; right:auto; width:${cy/2}%; background:linear-gradient(90deg,#8b6010,#d4a017);`;
-    } else {
-        primalBar.style.cssText = `right:50%; left:auto; width:${-cy/2}%; background:linear-gradient(90deg,#3a5a3a,#4a7a4a);`;
-    }
-
-    // Draw compass after layout
-    setTimeout(() => drawCompass(cx, cy), 80);
+  // Legend
+  const legend=document.getElementById('tiktoker-legend');
+  legend.innerHTML='';
+  TIKTOKERS.forEach(t=>{
+    const el=document.createElement('div');el.className='legend-item';
+    el.innerHTML=`<span class="legend-dot" style="background:${t.color}"></span>${t.emoji} ${t.name}`;
+    legend.appendChild(el);
+  });
 }
 
-function drawCompass(cx, cy) {
-    const canvas = document.getElementById('compass-canvas');
-    const size = Math.min(480, window.innerWidth - 48);
-    canvas.width = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext('2d');
-    const W = size, H = size;
-    const pad = 56;
-    const iW = W - pad * 2;
-    const iH = H - pad * 2;
-    const mx = W / 2, my = H / 2;
-
-    // Background
-    const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, '#1a1005');
-    bg.addColorStop(1, '#0d0903');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-
-    // Quadrant fills
-    // Top-right (carnivore + primal) — blood red
-    const trg = ctx.createRadialGradient(W - pad, pad, 0, W - pad, pad, iW * 0.7);
-    trg.addColorStop(0, 'rgba(139,21,21,0.22)');
-    trg.addColorStop(1, 'rgba(139,21,21,0)');
-    ctx.fillStyle = trg;
-    ctx.fillRect(mx, pad, W - pad - mx, my - pad);
-
-    // Top-left (omnivore + primal) — jungle green
-    const tlg = ctx.createRadialGradient(pad, pad, 0, pad, pad, iW * 0.7);
-    tlg.addColorStop(0, 'rgba(30,80,30,0.2)');
-    tlg.addColorStop(1, 'rgba(30,80,30,0)');
-    ctx.fillStyle = tlg;
-    ctx.fillRect(pad, pad, mx - pad, my - pad);
-
-    // Bottom-right — dim
-    ctx.fillStyle = 'rgba(60,25,10,0.08)';
-    ctx.fillRect(mx, my, W - pad - mx, H - pad - my);
-
-    // Bottom-left — dim
-    ctx.fillStyle = 'rgba(20,40,20,0.08)';
-    ctx.fillRect(pad, my, mx - pad, H - pad - my);
-
-    // Subtle grid
-    ctx.strokeStyle = 'rgba(200,180,140,0.08)';
-    ctx.lineWidth = 1;
-    for (let i = 1; i <= 3; i++) {
-        const gx = pad + (iW / 4) * i;
-        const gy = pad + (iH / 4) * i;
-        ctx.beginPath(); ctx.moveTo(gx, pad); ctx.lineTo(gx, H - pad); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(W - pad, gy); ctx.stroke();
-    }
-
-    // Main axes
-    ctx.strokeStyle = 'rgba(212,160,23,0.35)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(mx, pad); ctx.lineTo(mx, H - pad); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(pad, my); ctx.lineTo(W - pad, my); ctx.stroke();
-
-    // Border box
-    ctx.strokeStyle = 'rgba(212,160,23,0.18)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(pad, pad, iW, iH);
-
-    // Axis arrow heads
-    ctx.fillStyle = 'rgba(212,160,23,0.45)';
-    const arr = (x, y, d) => {
-        ctx.beginPath();
-        const s = 5;
-        if (d==='u') { ctx.moveTo(x,y); ctx.lineTo(x-s,y+s*1.6); ctx.lineTo(x+s,y+s*1.6); }
-        if (d==='d') { ctx.moveTo(x,y); ctx.lineTo(x-s,y-s*1.6); ctx.lineTo(x+s,y-s*1.6); }
-        if (d==='l') { ctx.moveTo(x,y); ctx.lineTo(x+s*1.6,y-s); ctx.lineTo(x+s*1.6,y+s); }
-        if (d==='r') { ctx.moveTo(x,y); ctx.lineTo(x-s*1.6,y-s); ctx.lineTo(x-s*1.6,y+s); }
-        ctx.closePath(); ctx.fill();
-    };
-    arr(mx, pad+2, 'u'); arr(mx, H-pad-2, 'd');
-    arr(pad+2, my, 'l'); arr(W-pad-2, my, 'r');
-
-    // Axis text labels
-    ctx.fillStyle = 'rgba(212,160,23,0.7)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const fSz = Math.max(9, Math.floor(size / 46));
-    ctx.font = `600 ${fSz}px Oswald, sans-serif`;
-
-    ctx.fillText('PRIMAL NUTT', mx, pad - 16);
-    ctx.fillText('GOY SLOP', mx, H - pad + 18);
-
-    ctx.save();
-    ctx.translate(pad - 16, my);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('OMNIVORE', 0, 0);
-    ctx.restore();
-
-    ctx.save();
-    ctx.translate(W - pad + 18, my);
-    ctx.rotate(Math.PI / 2);
-    ctx.fillText('CARNIVORE', 0, 0);
-    ctx.restore();
-
-    // Corner quadrant mini labels
-    const cFsz = Math.max(8, Math.floor(size / 54));
-    ctx.font = `${cFsz}px Oswald, sans-serif`;
-    ctx.fillStyle = 'rgba(212,160,23,0.28)';
-
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.fillText('RAW WOLF', W - pad - 8, pad + 8);
-
-    ctx.textAlign = 'left';
-    ctx.fillText('JUNGLE MONK', pad + 8, pad + 8);
-
-    ctx.textBaseline = 'bottom';
-    ctx.fillText('BEYOND BURGER', pad + 8, H - pad - 8);
-
-    ctx.textAlign = 'right';
-    ctx.fillText('SAD STEAK GUY', W - pad - 8, H - pad - 8);
-
-    // User dot
-    const dotX = mx + (cx / 100) * (iW / 2);
-    const dotY = my - (cy / 100) * (iH / 2);
-
-    // Pulse glow
-    const glow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 36);
-    glow.addColorStop(0, 'rgba(220,60,40,0.5)');
-    glow.addColorStop(0.5, 'rgba(220,60,40,0.12)');
-    glow.addColorStop(1, 'rgba(220,60,40,0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath(); ctx.arc(dotX, dotY, 36, 0, Math.PI * 2); ctx.fill();
-
-    // Dashed crosshair
-    ctx.strokeStyle = 'rgba(200,80,40,0.22)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 5]);
-    ctx.beginPath();
-    ctx.moveTo(dotX, dotY); ctx.lineTo(dotX, my);
-    ctx.moveTo(dotX, dotY); ctx.lineTo(mx, dotY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Outer ring
-    ctx.strokeStyle = 'rgba(220,80,40,0.65)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(dotX, dotY, 13, 0, Math.PI * 2); ctx.stroke();
-
-    // Fill dot
-    ctx.fillStyle = '#e03020';
-    ctx.beginPath(); ctx.arc(dotX, dotY, 8, 0, Math.PI * 2); ctx.fill();
-
-    // Centre glint
-    ctx.fillStyle = 'rgba(255,240,230,0.9)';
-    ctx.beginPath(); ctx.arc(dotX - 2.5, dotY - 2.5, 2.5, 0, Math.PI * 2); ctx.fill();
+// ── DOWNLOAD ────────────────────────────────────────────────
+function downloadCompass(){
+  // Draw a clean 640px version
+  const tmp=document.createElement('canvas');
+  tmp.id='__dl_canvas';
+  tmp.style.display='none';
+  document.body.appendChild(tmp);
+  const origId='compass-canvas';
+  document.getElementById(origId).id='__saved_canvas';
+  tmp.id=origId;
+  drawCompass(origId,_ux,_uy);
+  const link=document.createElement('a');
+  link.download='goatis-compass.png';
+  link.href=tmp.toDataURL('image/png');
+  link.click();
+  tmp.id='__dl_canvas';
+  document.getElementById('__saved_canvas').id=origId;
+  tmp.remove();
 }
 
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    window.scrollTo(0, 0);
-}
-
-function resetQuiz() { showScreen('intro-screen'); }
+// ── UTILITIES ───────────────────────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function resetQuiz(){showScreen('intro-screen');}
 </script>
 </body>
 </html>
