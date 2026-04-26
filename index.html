@@ -1,3 +1,15 @@
+<!--
+  Goatis Compass
+  MIT License — Copyright (c) 2026 Guyboy1
+  https://goatiscompass.github.io
+
+  NOT affiliated with, endorsed by, or connected to Goatis, Santa Cruz Medicinals,
+  Dillon Latham, Clavicular, Andrew Huberman, Doctor Mike, or any other creator
+  mentioned in this project. All names used are for satirical/entertainment purposes only.
+  This project is independent fan-made software released under the MIT License.
+
+  Full license: see LICENSE file in the repository.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -155,7 +167,7 @@ canvas{display:block;border:1px solid rgba(212,160,23,.18);box-shadow:0 0 60px r
   <div class="canvas-wrap"><canvas id="compass-canvas"></canvas></div>
   <div class="canvas-btns">
     <button class="dl-btn" onclick="downloadCompass()">⬇ Download</button>
-    <a class="site-link-btn" href="https://github.com/Guyboy1/GoatisCompass.github.io" target="_blank">🐐 Github Page</a>
+    <a class="site-link-btn" href="https://goatiscompass.github.io" target="_blank">🐐 goatiscompass.github.io</a>
   </div>
   <div class="archetype-block">
     <span class="arch-emoji" id="arch-emoji">🐐</span>
@@ -180,10 +192,14 @@ canvas{display:block;border:1px solid rgba(212,160,23,.18);box-shadow:0 0 60px r
   </div>
   <button class="retake-btn" onclick="resetQuiz()">↩ Retake</button>
   <div class="disclaimer">
+    <div class="disc-label">⚖ Legal Notice</div>
+    <p class="disc-text">This is an independent fan-made project. It is <strong style="color:rgba(200,170,110,0.65)">not affiliated with, endorsed by, or connected to</strong> Goatis, Santa Cruz Medicinals, Dillon Latham, Clavicular, Andrew Huberman, Doctor Mike, Bill Gates, or any other individual mentioned herein. All names are referenced for satirical and entertainment purposes only. Released under the <strong style="color:rgba(200,170,110,0.65)">MIT License</strong> — © 2026 Guyboy1.</p>
+  </div>
+  <div class="disclaimer" style="margin-top:10px">
     <div class="disc-label">⚠ Health Notice</div>
     <p class="disc-text">Entertainment only — based on TikTok health culture, not medical science. Raw milk poses real risk of E. coli, Salmonella and Listeria. Raw meat and organs carry parasite and bacterial risks. Consult a qualified healthcare professional before making major dietary changes. The goat wants you to live to eat more raw liver.</p>
   </div>
-  <a class="footer-link" href="https://goatisvalues.github.io" target="_blank">goatisvalues.github.io</a>
+  <a class="footer-link" href="https://goatiscompass.github.io" target="_blank">goatiscompass.github.io</a>
 </div>
 
 <script>
@@ -436,70 +452,142 @@ function showResults(){
 }
 
 // ── DRAW COMPASS ────────────────────────────────────────────
-function drawCompass(id,cx,cy){
-  const el=document.getElementById(id);
-  const size=Math.min(480,window.innerWidth-48);
-  el.width=size;el.height=size;
-  const ctx=el.getContext('2d');
-  const W=size,H=size,pad=58,iW=W-pad*2,iH=H-pad*2,mx=W/2,my=H/2;
+// forceSize: pass a number to render at that exact px (for download)
+function drawCompass(id, cx, cy, forceSize) {
+  const el = document.getElementById(id);
+  const size = forceSize || Math.min(600, window.innerWidth - 48);
+  el.width = size; el.height = size;
+  const ctx = el.getContext('2d');
+  const sc = size / 600; // scale factor relative to base 600px design
+  const W = size, H = size;
+  const pad = Math.round(68 * sc);
+  const iW = W - pad * 2, iH = H - pad * 2;
+  const mx = W / 2, my = H / 2;
 
-  // BG
-  const bg=ctx.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,'#1a1005');bg.addColorStop(1,'#0d0903');
-  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // ── Background ──────────────────────────────────────────────
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#1a1005'); bg.addColorStop(1, '#0d0903');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-  // Quadrant glow
-  [[mx,pad,W-pad-mx,my-pad,'rgba(139,21,21,0.22)','rgba(139,21,21,0)'],[pad,pad,mx-pad,my-pad,'rgba(30,80,30,0.20)','rgba(30,80,30,0)'],[mx,my,W-pad-mx,H-pad-my,'rgba(60,20,10,0.10)','rgba(60,20,10,0)'],[pad,my,mx-pad,H-pad-my,'rgba(10,30,10,0.08)','rgba(10,30,10,0)']].forEach(([ox,oy,dw,dh,c1,c2])=>{
-    const g=ctx.createRadialGradient(ox,oy,0,ox,oy,Math.hypot(dw,dh));
-    g.addColorStop(0,c1);g.addColorStop(1,c2);
-    ctx.fillStyle=g;ctx.fillRect(ox<mx?pad:mx,oy<my?pad:my,dw,dh);
+  // ── Quadrant colour fills (corner-origin radial gradients) ──
+  // Top-Right  = Carnivore + Primal Nutt = RED
+  // Top-Left   = Omnivore  + Primal Nutt = BLUE
+  // Bottom-Left  = Omnivore + Goy Slop   = PINK
+  // Bottom-Right = Carnivore + Goy Slop  = YELLOW
+  const quads = [
+    // [originX, originY, rectX, rectY, rectW, rectH, colour]
+    { ox:W-pad, oy:pad,   rx:mx,   ry:pad, rw:W-pad-mx,   rh:my-pad,   c1:'rgba(190,30,30,0.38)',   c2:'rgba(190,30,30,0)'   }, // TR red
+    { ox:pad,   oy:pad,   rx:pad,  ry:pad, rw:mx-pad,     rh:my-pad,   c1:'rgba(30,60,200,0.38)',   c2:'rgba(30,60,200,0)'   }, // TL blue
+    { ox:pad,   oy:H-pad, rx:pad,  ry:my,  rw:mx-pad,     rh:H-pad-my, c1:'rgba(220,60,150,0.34)',  c2:'rgba(220,60,150,0)'  }, // BL pink
+    { ox:W-pad, oy:H-pad, rx:mx,   ry:my,  rw:W-pad-mx,   rh:H-pad-my, c1:'rgba(210,155,0,0.32)',   c2:'rgba(210,155,0,0)'   }, // BR yellow
+  ];
+  quads.forEach(q => {
+    const g = ctx.createRadialGradient(q.ox, q.oy, 0, q.ox, q.oy, Math.hypot(q.rw, q.rh) * 1.1);
+    g.addColorStop(0, q.c1); g.addColorStop(1, q.c2);
+    ctx.fillStyle = g; ctx.fillRect(q.rx, q.ry, q.rw, q.rh);
   });
 
-  // Grid
-  ctx.strokeStyle='rgba(200,180,140,0.07)';ctx.lineWidth=1;
-  for(let i=1;i<=3;i++){
-    const gx=pad+(iW/4)*i,gy=pad+(iH/4)*i;
-    ctx.beginPath();ctx.moveTo(gx,pad);ctx.lineTo(gx,H-pad);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(pad,gy);ctx.lineTo(W-pad,gy);ctx.stroke();
+  // ── Subtle grid ─────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(210,190,150,0.07)'; ctx.lineWidth = Math.max(0.5, sc);
+  for (let i = 1; i <= 3; i++) {
+    const gx = pad + (iW / 4) * i, gy = pad + (iH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(gx, pad); ctx.lineTo(gx, H - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(W - pad, gy); ctx.stroke();
   }
 
-  // Axes
-  ctx.strokeStyle='rgba(212,160,23,0.35)';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.moveTo(mx,pad);ctx.lineTo(mx,H-pad);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(pad,my);ctx.lineTo(W-pad,my);ctx.stroke();
-  ctx.strokeStyle='rgba(212,160,23,0.18)';ctx.lineWidth=1;ctx.strokeRect(pad,pad,iW,iH);
+  // ── Main axes ───────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(230,210,160,0.45)'; ctx.lineWidth = Math.max(1, 1.5 * sc);
+  ctx.beginPath(); ctx.moveTo(mx, pad); ctx.lineTo(mx, H - pad); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad, my); ctx.lineTo(W - pad, my); ctx.stroke();
 
-  // Arrowheads
-  ctx.fillStyle='rgba(212,160,23,0.45)';
-  const arr=(x,y,d)=>{const s=5;ctx.beginPath();if(d==='u'){ctx.moveTo(x,y);ctx.lineTo(x-s,y+s*1.6);ctx.lineTo(x+s,y+s*1.6);}if(d==='d'){ctx.moveTo(x,y);ctx.lineTo(x-s,y-s*1.6);ctx.lineTo(x+s,y-s*1.6);}if(d==='l'){ctx.moveTo(x,y);ctx.lineTo(x+s*1.6,y-s);ctx.lineTo(x+s*1.6,y+s);}if(d==='r'){ctx.moveTo(x,y);ctx.lineTo(x-s*1.6,y-s);ctx.lineTo(x-s*1.6,y+s);}ctx.closePath();ctx.fill();};
-  arr(mx,pad+2,'u');arr(mx,H-pad-2,'d');arr(pad+2,my,'l');arr(W-pad-2,my,'r');
+  // Border box
+  ctx.strokeStyle = 'rgba(230,210,160,0.22)'; ctx.lineWidth = Math.max(0.5, sc);
+  ctx.strokeRect(pad, pad, iW, iH);
 
-  // Axis labels
-  const fs=Math.max(9,Math.floor(size/46));
-  ctx.font=`600 ${fs}px Oswald, sans-serif`;ctx.fillStyle='rgba(212,160,23,0.75)';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('PRIMAL NUTT',mx,pad-16);ctx.fillText('GOY SLOP',mx,H-pad+18);
-  ctx.save();ctx.translate(pad-16,my);ctx.rotate(-Math.PI/2);ctx.fillText('OMNIVORE',0,0);ctx.restore();
-  ctx.save();ctx.translate(W-pad+18,my);ctx.rotate(Math.PI/2);ctx.fillText('CARNIVORE',0,0);ctx.restore();
+  // ── Arrowheads ──────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(230,210,160,0.5)';
+  const arr = (x, y, d) => {
+    const s = 5 * sc;
+    ctx.beginPath();
+    if (d==='u'){ctx.moveTo(x,y);ctx.lineTo(x-s,y+s*1.6);ctx.lineTo(x+s,y+s*1.6);}
+    if (d==='d'){ctx.moveTo(x,y);ctx.lineTo(x-s,y-s*1.6);ctx.lineTo(x+s,y-s*1.6);}
+    if (d==='l'){ctx.moveTo(x,y);ctx.lineTo(x+s*1.6,y-s);ctx.lineTo(x+s*1.6,y+s);}
+    if (d==='r'){ctx.moveTo(x,y);ctx.lineTo(x-s*1.6,y-s);ctx.lineTo(x-s*1.6,y+s);}
+    ctx.closePath(); ctx.fill();
+  };
+  arr(mx, pad + 2*sc, 'u'); arr(mx, H - pad - 2*sc, 'd');
+  arr(pad + 2*sc, my, 'l'); arr(W - pad - 2*sc, my, 'r');
 
-  // Corner labels
-  const cs=Math.max(7,Math.floor(size/58));ctx.font=`${cs}px Oswald, sans-serif`;ctx.fillStyle='rgba(212,160,23,0.22)';
-  ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText('LIVER SOVEREIGN',W-pad-8,pad+8);
-  ctx.textAlign='left';ctx.fillText('FRUITARIAN PROPHET',pad+8,pad+8);
-  ctx.textBaseline='bottom';ctx.fillText('MICROBIOME MONK',pad+8,H-pad-8);
-  ctx.textAlign='right';ctx.fillText('WEF DIET',W-pad-8,H-pad-8);
+  // ── Axis text labels ─────────────────────────────────────────
+  const fs = Math.round(13 * sc);
+  ctx.font = `600 ${fs}px Oswald, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  // top label
+  ctx.fillStyle = 'rgba(200,100,100,0.85)';
+  ctx.fillText('PRIMAL NUTT', mx, pad - 20*sc);
+  // bottom label
+  ctx.fillStyle = 'rgba(200,140,180,0.80)';
+  ctx.fillText('GOY SLOP', mx, H - pad + 22*sc);
+  // left label
+  ctx.fillStyle = 'rgba(100,130,220,0.85)';
+  ctx.save(); ctx.translate(pad - 20*sc, my); ctx.rotate(-Math.PI / 2); ctx.fillText('OMNIVORE', 0, 0); ctx.restore();
+  // right label
+  ctx.fillStyle = 'rgba(220,100,80,0.85)';
+  ctx.save(); ctx.translate(W - pad + 22*sc, my); ctx.rotate(Math.PI / 2); ctx.fillText('CARNIVORE', 0, 0); ctx.restore();
 
-  // User dot
-  const dx=mx+(cx/100)*(iW/2),dy=my-(cy/100)*(iH/2);
-  const glow=ctx.createRadialGradient(dx,dy,0,dx,dy,40);
-  glow.addColorStop(0,'rgba(220,60,40,0.5)');glow.addColorStop(0.5,'rgba(220,60,40,0.12)');glow.addColorStop(1,'rgba(220,60,40,0)');
-  ctx.fillStyle=glow;ctx.beginPath();ctx.arc(dx,dy,40,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='rgba(200,80,40,0.2)';ctx.lineWidth=1;ctx.setLineDash([4,5]);
-  ctx.beginPath();ctx.moveTo(dx,dy);ctx.lineTo(dx,my);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(dx,dy);ctx.lineTo(mx,dy);ctx.stroke();
+  // ── Corner quadrant micro-labels ──────────────────────────────
+  const cs = Math.round(8 * sc);
+  ctx.font = `${cs}px Oswald, sans-serif`;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(220,100,80,0.30)';
+  ctx.fillText('LIVER SOVEREIGN', W - pad - 8*sc, pad + 8*sc);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(80,120,220,0.30)';
+  ctx.fillText('FRUITARIAN PROPHET', pad + 8*sc, pad + 8*sc);
+  ctx.textBaseline = 'bottom';
+  ctx.fillStyle = 'rgba(210,80,160,0.28)';
+  ctx.fillText('MICROBIOME MONK', pad + 8*sc, H - pad - 8*sc);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(200,150,0,0.28)';
+  ctx.fillText('WEF DIET', W - pad - 8*sc, H - pad - 8*sc);
+
+  // ── User dot ─────────────────────────────────────────────────
+  const dx = mx + (cx / 100) * (iW / 2);
+  const dy = my - (cy / 100) * (iH / 2);
+  const dotR = 8 * sc;
+
+  // Glow
+  const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, 44 * sc);
+  glow.addColorStop(0, 'rgba(255,255,255,0.45)');
+  glow.addColorStop(0.35, 'rgba(255,255,255,0.10)');
+  glow.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(dx, dy, 44*sc, 0, Math.PI*2); ctx.fill();
+
+  // Crosshair dashes
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = sc;
+  ctx.setLineDash([4*sc, 5*sc]);
+  ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(dx, my); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(dx, dy); ctx.lineTo(mx, dy); ctx.stroke();
   ctx.setLineDash([]);
-  ctx.strokeStyle='rgba(220,80,40,0.7)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(dx,dy,13,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle='#e03020';ctx.beginPath();ctx.arc(dx,dy,8,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='rgba(255,240,230,0.9)';ctx.beginPath();ctx.arc(dx-2.5,dy-2.5,2.5,0,Math.PI*2);ctx.fill();
+
+  // Outer ring
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.8 * sc;
+  ctx.beginPath(); ctx.arc(dx, dy, dotR + 5*sc, 0, Math.PI*2); ctx.stroke();
+
+  // Fill
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(dx, dy, dotR, 0, Math.PI*2); ctx.fill();
+
+  // Glint
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath(); ctx.arc(dx - 2.5*sc, dy - 2.5*sc, 2.5*sc, 0, Math.PI*2); ctx.fill();
+
+  // ── Website URL watermark (baked into the graphic) ────────────
+  const urlFs = Math.round(10 * sc);
+  ctx.font = `400 ${urlFs}px Oswald, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillStyle = 'rgba(210,190,150,0.38)';
+  ctx.fillText('goatiscompass.github.io', mx, H - 5*sc);
 
   return el;
 }
@@ -513,17 +601,24 @@ function drawTiktokerCompass(userX,userY){
   const ctx=el.getContext('2d');
   const W=size,H=size,pad=58,iW=W-pad*2,iH=H-pad*2,mx=W/2,my=H/2;
 
-  // same BG & axes as main compass (condensed)
+  // BG + quadrants matching main compass colours
   const bg=ctx.createLinearGradient(0,0,W,H);
   bg.addColorStop(0,'#1a1005');bg.addColorStop(1,'#0d0903');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-  [[mx,pad,W-pad-mx,my-pad,'rgba(139,21,21,0.18)','rgba(139,21,21,0)'],[pad,pad,mx-pad,my-pad,'rgba(30,80,30,0.15)','rgba(30,80,30,0)'],[mx,my,W-pad-mx,H-pad-my,'rgba(60,20,10,0.08)','rgba(60,20,10,0)'],[pad,my,mx-pad,H-pad-my,'rgba(10,30,10,0.06)','rgba(10,30,10,0)']].forEach(([ox,oy,dw,dh,c1,c2])=>{const g=ctx.createRadialGradient(ox,oy,0,ox,oy,Math.hypot(dw,dh));g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillRect(ox<mx?pad:mx,oy<my?pad:my,dw,dh);});
+  [
+    {ox:W-pad,oy:pad,  rx:mx,  ry:pad, rw:W-pad-mx, rh:my-pad,   c1:'rgba(190,30,30,0.30)',  c2:'rgba(190,30,30,0)' }, // TR red
+    {ox:pad,  oy:pad,  rx:pad, ry:pad, rw:mx-pad,   rh:my-pad,   c1:'rgba(30,60,200,0.30)',  c2:'rgba(30,60,200,0)' }, // TL blue
+    {ox:pad,  oy:H-pad,rx:pad, ry:my,  rw:mx-pad,   rh:H-pad-my, c1:'rgba(220,60,150,0.26)', c2:'rgba(220,60,150,0)'},  // BL pink
+    {ox:W-pad,oy:H-pad,rx:mx,  ry:my,  rw:W-pad-mx, rh:H-pad-my, c1:'rgba(210,155,0,0.24)',  c2:'rgba(210,155,0,0)' }, // BR yellow
+  ].forEach(q=>{const g=ctx.createRadialGradient(q.ox,q.oy,0,q.ox,q.oy,Math.hypot(q.rw,q.rh)*1.1);g.addColorStop(0,q.c1);g.addColorStop(1,q.c2);ctx.fillStyle=g;ctx.fillRect(q.rx,q.ry,q.rw,q.rh);});
   ctx.strokeStyle='rgba(200,180,140,0.06)';ctx.lineWidth=1;for(let i=1;i<=3;i++){const gx=pad+(iW/4)*i,gy=pad+(iH/4)*i;ctx.beginPath();ctx.moveTo(gx,pad);ctx.lineTo(gx,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,gy);ctx.lineTo(W-pad,gy);ctx.stroke();}
   ctx.strokeStyle='rgba(212,160,23,0.28)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(mx,pad);ctx.lineTo(mx,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,my);ctx.lineTo(W-pad,my);ctx.stroke();
   ctx.strokeStyle='rgba(212,160,23,0.14)';ctx.lineWidth=1;ctx.strokeRect(pad,pad,iW,iH);
-  const fs=Math.max(8,Math.floor(size/48));ctx.font=`600 ${fs}px Oswald, sans-serif`;ctx.fillStyle='rgba(212,160,23,0.55)';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('PRIMAL NUTT',mx,pad-15);ctx.fillText('GOY SLOP',mx,H-pad+17);
-  ctx.save();ctx.translate(pad-14,my);ctx.rotate(-Math.PI/2);ctx.fillText('OMNIVORE',0,0);ctx.restore();
-  ctx.save();ctx.translate(W-pad+16,my);ctx.rotate(Math.PI/2);ctx.fillText('CARNIVORE',0,0);ctx.restore();
+  const fs=Math.max(8,Math.floor(size/48));ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`600 ${fs}px Oswald, sans-serif`;
+  ctx.fillStyle='rgba(200,100,100,0.75)'; ctx.fillText('PRIMAL NUTT',mx,pad-15);
+  ctx.fillStyle='rgba(200,140,180,0.70)'; ctx.fillText('GOY SLOP',mx,H-pad+17);
+  ctx.fillStyle='rgba(100,130,220,0.75)'; ctx.save();ctx.translate(pad-14,my);ctx.rotate(-Math.PI/2);ctx.fillText('OMNIVORE',0,0);ctx.restore();
+  ctx.fillStyle='rgba(220,100,80,0.75)';  ctx.save();ctx.translate(W-pad+16,my);ctx.rotate(Math.PI/2);ctx.fillText('CARNIVORE',0,0);ctx.restore();
 
   // Plot each person
   TIKTOKERS.forEach(t=>{
@@ -548,22 +643,18 @@ function drawTiktokerCompass(userX,userY){
 }
 
 // ── DOWNLOAD ────────────────────────────────────────────────
-function downloadCompass(){
-  // Draw a clean 640px version
-  const tmp=document.createElement('canvas');
-  tmp.id='__dl_canvas';
-  tmp.style.display='none';
+function downloadCompass() {
+  // Render at 1200px off-screen
+  const EXPORT_SIZE = 1200;
+  const tmp = document.createElement('canvas');
+  tmp.id = '__export_canvas';
+  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px';
   document.body.appendChild(tmp);
-  const origId='compass-canvas';
-  document.getElementById(origId).id='__saved_canvas';
-  tmp.id=origId;
-  drawCompass(origId,_ux,_uy);
-  const link=document.createElement('a');
-  link.download='goatis-compass.png';
-  link.href=tmp.toDataURL('image/png');
+  drawCompass('__export_canvas', _ux, _uy, EXPORT_SIZE);
+  const link = document.createElement('a');
+  link.download = 'goatis-compass.png';
+  link.href = tmp.toDataURL('image/png', 1.0);
   link.click();
-  tmp.id='__dl_canvas';
-  document.getElementById('__saved_canvas').id=origId;
   tmp.remove();
 }
 
